@@ -1,0 +1,18 @@
+{
+  "name": "Kifu Digitizer",
+  "short_name": "Kifu",
+  "description": "Digitize Go game records from photos into SGF files",
+  "start_url": "./kifu-digitizer.html",
+  "display": "standalone",
+  "orientation": "any",
+  "background_color": "#1a1a1e",
+  "theme_color": "#1a1a1e",
+  "icons": [
+    {
+      "src": "icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}

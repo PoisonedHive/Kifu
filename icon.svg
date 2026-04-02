@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
+  <rect fill="#1a1a1e" width="512" height="512" rx="102"/>
+  <!-- Grid -->
+  <g stroke="rgba(201,168,76,0.4)" stroke-width="3" fill="none">
+    <line x1="112" y1="112" x2="400" y2="112"/><line x1="112" y1="184" x2="400" y2="184"/>
+    <line x1="112" y1="256" x2="400" y2="256"/><line x1="112" y1="328" x2="400" y2="328"/>
+    <line x1="112" y1="400" x2="400" y2="400"/>
+    <line x1="112" y1="112" x2="112" y2="400"/><line x1="184" y1="112" x2="184" y2="400"/>
+    <line x1="256" y1="112" x2="256" y2="400"/><line x1="328" y1="112" x2="328" y2="400"/>
+    <line x1="400" y1="112" x2="400" y2="400"/>
+  </g>
+  <!-- Black stone -->
+  <circle cx="184" cy="184" r="30" fill="#222" stroke="rgba(255,255,255,0.3)" stroke-width="2"/>
+  <!-- White stone -->
+  <circle cx="256" cy="256" r="30" fill="#e8e4dc" stroke="rgba(0,0,0,0.4)" stroke-width="2"/>
+  <!-- Label -->
+  <text x="256" y="480" text-anchor="middle" fill="#c9a84c" font-family="sans-serif" font-weight="bold" font-size="64">碁 Kifu</text>
+</svg>

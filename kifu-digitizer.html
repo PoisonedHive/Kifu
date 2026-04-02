@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no"/>
+<meta name="apple-mobile-web-app-capable" content="yes"/>
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent"/>
+<meta name="theme-color" content="#1a1a1e"/>
+<title>Kifu Digitizer</title>
+<link rel="manifest" href="manifest.json"/>
+<link rel="apple-touch-icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect fill='%231a1a1e' width='100' height='100' rx='20'/><text x='50' y='68' text-anchor='middle' font-size='55'>碁</text></svg>"/>
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;1,9..40,300&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#1a1a1e;--surface:#242428;--surface2:#2e2e34;--border:#3a3a42;
+  --text:#e8e6e3;--text2:#9e9c98;--accent:#c9a84c;--accent2:#d4b86a;
+  --black-stone:#1a1a1a;--white-stone:#e8e4dc;
+  --danger:#c44;--success:#4a8;
+  --radius:10px;--radius-sm:6px;
+}
+html,body{height:100%;overflow:hidden}
+body{
+  font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);
+  display:flex;flex-direction:column;height:100dvh;
+  -webkit-tap-highlight-color:transparent;
+  touch-action:manipulation;
+}
+
+/* ── Top Bar ── */
+.topbar{
+  display:flex;align-items:center;gap:10px;
+  padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--border);
+  flex-shrink:0;min-height:50px;flex-wrap:wrap;
+}
+.topbar h1{
+  font-size:15px;font-weight:700;letter-spacing:0.5px;color:var(--accent);
+  white-space:nowrap;
+}
+.topbar .spacer{flex:1}
+
+/* ── Buttons ── */
+.btn{
+  display:inline-flex;align-items:center;gap:5px;
+  padding:7px 13px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--surface2);color:var(--text);font-family:inherit;font-size:13px;
+  font-weight:500;cursor:pointer;white-space:nowrap;
+  transition:background .15s,border-color .15s;
+}
+.btn:active{background:var(--border)}
+.btn.primary{background:var(--accent);color:#1a1a1a;border-color:var(--accent);font-weight:700}
+.btn.primary:active{background:var(--accent2)}
+.btn.danger{border-color:var(--danger);color:var(--danger)}
+.btn.small{padding:5px 9px;font-size:12px}
+.btn:disabled{opacity:.35;pointer-events:none}
+.btn svg{width:16px;height:16px;flex-shrink:0}
+
+select.ctrl{
+  padding:7px 10px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--surface2);color:var(--text);font-family:inherit;font-size:13px;
+  appearance:none;-webkit-appearance:none;
+  background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='10' height='6'%3E%3Cpath d='M0 0l5 6 5-6z' fill='%239e9c98'/%3E%3C/svg%3E");
+  background-repeat:no-repeat;background-position:right 8px center;
+  padding-right:24px;
+}
+
+/* ── Layout ── */
+.main{display:flex;flex:1;overflow:hidden;min-height:0}
+.canvas-wrap{
+  flex:1;display:flex;align-items:center;justify-content:center;
+  background:#111;position:relative;overflow:hidden;
+  min-width:0;
+}
+.canvas-wrap canvas{
+  display:block;max-width:100%;max-height:100%;
+  touch-action:none;
+}
+
+/* ── Sidebar ── */
+.sidebar{
+  width:280px;flex-shrink:0;display:flex;flex-direction:column;
+  background:var(--surface);border-left:1px solid var(--border);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;
+}
+.sidebar section{padding:12px;border-bottom:1px solid var(--border)}
+.sidebar section h3{
+  font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;
+  color:var(--text2);margin-bottom:8px;
+}
+.sidebar .row{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.sidebar label{font-size:12px;color:var(--text2);display:flex;align-items:center;gap:5px}
+.sidebar input[type="text"],.sidebar input[type="number"]{
+  width:100%;padding:6px 8px;border:1px solid var(--border);border-radius:var(--radius-sm);
+  background:var(--surface2);color:var(--text);font-family:inherit;font-size:13px;
+}
+.sidebar textarea{
+  width:100%;height:120px;padding:8px;border:1px solid var(--border);
+  border-radius:var(--radius-sm);background:var(--surface2);color:var(--text);
+  font-family:'JetBrains Mono',monospace;font-size:11px;resize:vertical;
+}
+
+/* ── Status Bar ── */
+.statusbar{
+  display:flex;align-items:center;gap:8px;padding:6px 12px;
+  background:var(--surface);border-top:1px solid var(--border);
+  font-size:12px;color:var(--text2);flex-shrink:0;min-height:36px;
+  flex-wrap:wrap;
+}
+.status-chip{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 9px;border-radius:999px;font-size:11px;font-weight:600;
+}
+.status-chip.mode{background:var(--accent);color:#1a1a1a}
+.status-chip.info{background:var(--surface2);color:var(--text)}
+.status-chip.turn-b{background:#333;color:#fff;border:1px solid #555}
+.status-chip.turn-w{background:#ddd;color:#1a1a1a;border:1px solid #aaa}
+
+/* ── Onboarding overlay ── */
+.onboard{
+  position:absolute;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;gap:20px;
+  background:rgba(0,0,0,.85);z-index:10;text-align:center;padding:30px;
+}
+.onboard h2{font-size:22px;font-weight:700;color:var(--accent)}
+.onboard p{color:var(--text2);font-size:14px;max-width:340px;line-height:1.5}
+.onboard .btn{font-size:15px;padding:12px 28px}
+.onboard input[type=file]{display:none}
+
+/* ── Move list ── */
+.move-list{
+  display:flex;flex-wrap:wrap;gap:2px;max-height:160px;overflow-y:auto;
+  font-family:'JetBrains Mono',monospace;font-size:11px;
+}
+.move-item{
+  padding:2px 6px;border-radius:3px;cursor:default;
+}
+.move-item.b{background:#333;color:#fff}
+.move-item.w{background:#ddd;color:#1a1a1a}
+
+/* ── Checkbox toggle ── */
+.toggle{
+  position:relative;display:inline-block;width:36px;height:20px;flex-shrink:0;
+}
+.toggle input{opacity:0;width:0;height:0}
+.toggle .slider{
+  position:absolute;inset:0;background:var(--surface2);border:1px solid var(--border);
+  border-radius:10px;cursor:pointer;transition:.2s;
+}
+.toggle .slider::before{
+  content:'';position:absolute;width:14px;height:14px;left:2px;top:2px;
+  background:var(--text2);border-radius:50%;transition:.2s;
+}
+.toggle input:checked + .slider{background:var(--accent);border-color:var(--accent)}
+.toggle input:checked + .slider::before{transform:translateX(16px);background:#1a1a1a}
+
+/* ── Responsive: stacked layout for portrait tablets / phones ── */
+@media (max-width:700px){
+  .main{flex-direction:column}
+  .sidebar{
+    width:100%;flex-shrink:0;max-height:45vh;
+    border-left:none;border-top:1px solid var(--border);
+  }
+  .canvas-wrap{min-height:200px}
+}
+
+/* ── Crop toolbar floating over canvas ── */
+.crop-toolbar{
+  position:absolute;bottom:16px;left:50%;transform:translateX(-50%);
+  display:flex;gap:8px;z-index:5;
+  background:rgba(30,30,34,.92);backdrop-filter:blur(8px);
+  padding:8px 14px;border-radius:var(--radius);border:1px solid var(--border);
+}
+
+/* Pinch-to-zoom prevention */
+@media (pointer:coarse){
+  .canvas-wrap canvas{touch-action:none}
+}
+</style>
+</head>
+<body>
+
+<!-- ── Top Bar ── -->
+<div class="topbar">
+  <h1>碁 Kifu Digitizer</h1>
+  <select class="ctrl" id="boardSize">
+    <option value="9">9 × 9</option>
+    <option value="13">13 × 13</option>
+    <option value="19" selected>19 × 19</option>
+  </select>
+  <div class="spacer"></div>
+  <button class="btn" id="undoBtn" disabled>
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 10h13a4 4 0 010 8H9"/><path d="M3 10l5-5M3 10l5 5"/></svg>
+    Undo
+  </button>
+  <button class="btn" id="redoBtn" disabled>
+    Redo
+    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 10H8a4 4 0 000 8h7"/><path d="M21 10l-5-5M21 10l-5 5"/></svg>
+  </button>
+</div>
+
+<!-- ── Main Area ── -->
+<div class="main">
+  <div class="canvas-wrap" id="canvasWrap">
+    <canvas id="canvas"></canvas>
+    <!-- Crop toolbar -->
+    <div class="crop-toolbar" id="cropToolbar" style="display:none">
+      <button class="btn primary small" id="applyCropBtn">✓ Apply Crop</button>
+      <button class="btn small" id="resetCropBtn">Reset</button>
+      <button class="btn small" id="skipCropBtn">Skip</button>
+    </div>
+    <!-- Onboarding overlay -->
+    <div class="onboard" id="onboard">
+      <h2>Load a Kifu Image</h2>
+      <p>Take a photo of a Go game record or upload an existing image to begin digitizing.</p>
+      <div class="row" style="display:flex;gap:12px">
+        <label class="btn primary" style="font-size:15px;padding:12px 24px;cursor:pointer">
+          📷 Take Photo
+          <input type="file" accept="image/*" capture="environment" id="cameraInput"/>
+        </label>
+        <label class="btn" style="font-size:15px;padding:12px 24px;cursor:pointer">
+          📁 Upload
+          <input type="file" accept="image/*" id="fileInput"/>
+        </label>
+      </div>
+    </div>
+  </div>
+
+  <!-- ── Sidebar ── -->
+  <div class="sidebar">
+
+    <section id="imageSection" style="display:none">
+      <h3>Image</h3>
+      <div class="row">
+        <label class="btn small" style="cursor:pointer">
+          📷 New Photo
+          <input type="file" accept="image/*" capture="environment" id="cameraInput2" style="display:none"/>
+        </label>
+        <label class="btn small" style="cursor:pointer">
+          📁 New Image
+          <input type="file" accept="image/*" id="fileInput2" style="display:none"/>
+        </label>
+        <button class="btn small" id="recropBtn">Re-crop</button>
+        <button class="btn small" id="resetCornersBtn">Reset Corners</button>
+      </div>
+    </section>
+
+    <section>
+      <h3>Workflow</h3>
+      <div class="row" style="gap:8px;flex-direction:column;align-items:stretch">
+        <button class="btn" id="cropBtn" disabled>① Crop Image</button>
+        <button class="btn" id="setCornersBtn" disabled>② Set Board Corners</button>
+        <button class="btn" id="handicapBtn" disabled>③ Place Handicap Stones</button>
+        <button class="btn primary" id="recordBtn" disabled>④ Record Moves</button>
+      </div>
+    </section>
+
+    <section id="handicapSection" style="display:none">
+      <h3>Handicap Settings</h3>
+      <div class="row" style="margin-bottom:6px">
+        <label>Stone Color
+          <select class="ctrl" id="hcpColor">
+            <option value="B">Black</option>
+            <option value="W">White</option>
+          </select>
+        </label>
+      </div>
+      <div class="row">
+        <span style="font-size:12px;color:var(--text2)" id="hcpCount">0 stones placed</span>
+        <div class="spacer" style="flex:1"></div>
+        <button class="btn small danger" id="clearHcpBtn">Clear All</button>
+      </div>
+    </section>
+
+    <section id="recordSection" style="display:none">
+      <h3>Recording</h3>
+      <div class="row" style="margin-bottom:6px">
+        <label>First to Play
+          <select class="ctrl" id="firstToPlay">
+            <option value="B">Black</option>
+            <option value="W">White</option>
+          </select>
+        </label>
+        <label>Start from #
+          <input type="number" id="startMoveNum" value="1" min="1" style="width:60px"/>
+        </label>
+      </div>
+      <div class="row" style="margin-bottom:8px">
+        <label style="font-size:12px">
+          <span class="toggle"><input type="checkbox" id="replaceToggle" checked/><span class="slider"></span></span>
+          Replace occupied
+        </label>
+      </div>
+      <div class="row" style="margin-bottom:4px">
+        <button class="btn small" id="passBtn">Pass</button>
+        <button class="btn small danger" id="clearMovesBtn">Clear Moves</button>
+      </div>
+      <div class="move-list" id="moveList"></div>
+    </section>
+
+    <section>
+      <h3>Game Info</h3>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px">
+        <label style="flex-direction:column;align-items:stretch">
+          Black Player
+          <input type="text" id="playerB" placeholder="Black"/>
+        </label>
+        <label style="flex-direction:column;align-items:stretch">
+          White Player
+          <input type="text" id="playerW" placeholder="White"/>
+        </label>
+        <label style="flex-direction:column;align-items:stretch">
+          Komi
+          <input type="text" id="komiInput" value="7.5"/>
+        </label>
+        <label style="flex-direction:column;align-items:stretch">
+          Result
+          <input type="text" id="resultInput" placeholder="e.g. B+3.5"/>
+        </label>
+      </div>
+    </section>
+
+    <section>
+      <h3>SGF Output</h3>
+      <div class="row" style="margin-bottom:6px">
+        <button class="btn small primary" id="exportBtn">Generate SGF</button>
+        <button class="btn small" id="copyBtn">Copy to Clipboard</button>
+      </div>
+      <textarea id="sgfOutput" placeholder="SGF will appear here…" readonly></textarea>
+    </section>
+  </div>
+</div>
+
+<!-- ── Status Bar ── -->
+<div class="statusbar">
+  <span class="status-chip mode" id="modeChip">No Image</span>
+  <span class="status-chip info" id="infoChip"></span>
+  <span id="turnChip"></span>
+</div>
+
+<script>
+(() => {
+  // ── DOM refs ──
+  const canvas = document.getElementById('canvas');
+  const ctx = canvas.getContext('2d');
+  const canvasWrap = document.getElementById('canvasWrap');
+  const onboard = document.getElementById('onboard');
+
+  const boardSizeSel = document.getElementById('boardSize');
+  const undoBtn = document.getElementById('undoBtn');
+  const redoBtn = document.getElementById('redoBtn');
+
+  const setCornersBtn = document.getElementById('setCornersBtn');
+  const handicapBtn = document.getElementById('handicapBtn');
+  const recordBtn = document.getElementById('recordBtn');
+  const resetCornersBtn = document.getElementById('resetCornersBtn');
+  const cropBtn = document.getElementById('cropBtn');
+  const applyCropBtn = document.getElementById('applyCropBtn');
+  const resetCropBtn = document.getElementById('resetCropBtn');
+  const skipCropBtn = document.getElementById('skipCropBtn');
+  const cropToolbar = document.getElementById('cropToolbar');
+
+  const hcpColorSel = document.getElementById('hcpColor');
+  const hcpCountEl = document.getElementById('hcpCount');
+  const clearHcpBtn = document.getElementById('clearHcpBtn');
+  const firstToPlaySel = document.getElementById('firstToPlay');
+  const replaceToggle = document.getElementById('replaceToggle');
+  const startMoveNumInput = document.getElementById('startMoveNum');
+  const passBtn = document.getElementById('passBtn');
+  const clearMovesBtn = document.getElementById('clearMovesBtn');
+  const moveListEl = document.getElementById('moveList');
+
+  const playerB = document.getElementById('playerB');
+  const playerW = document.getElementById('playerW');
+  const komiInput = document.getElementById('komiInput');
+  const resultInput = document.getElementById('resultInput');
+
+  const exportBtn = document.getElementById('exportBtn');
+  const copyBtn = document.getElementById('copyBtn');
+  const sgfOutput = document.getElementById('sgfOutput');
+
+  const modeChip = document.getElementById('modeChip');
+  const infoChip = document.getElementById('infoChip');
+  const turnChip = document.getElementById('turnChip');
+
+  const imageSection = document.getElementById('imageSection');
+  const handicapSection = document.getElementById('handicapSection');
+  const recordSection = document.getElementById('recordSection');
+
+  // File inputs (onboard + sidebar)
+  const fileInputs = [
+    document.getElementById('cameraInput'),
+    document.getElementById('fileInput'),
+    document.getElementById('cameraInput2'),
+    document.getElementById('fileInput2'),
+  ];
+
+  // ── State ──
+  let img = null;
+  let originalImg = null; // pre-crop image kept for reset
+  let mode = 'none'; // none | crop | corners | handicap | record
+  let corners = []; // [{x,y}] in image coords, TL TR BR BL
+  let dragCorner = -1;
+
+  // Crop state (in image pixel coords)
+  let cropRect = null; // {x, y, w, h}
+  let cropDrag = null; // null | 'move' | 'tl' | 'tr' | 'bl' | 'br' | 't' | 'b' | 'l' | 'r'
+  let cropDragStart = null; // {mx, my, rect:{...}}
+
+  let handicapB = new Set();
+  let handicapW = new Set();
+
+  let nodes = []; // {color, x, y, ae[], pass?}
+  let redoStack = [];
+  let board = new Map();
+
+  const key = (x, y) => `${x},${y}`;
+  const parseKey = k => k.split(',').map(Number);
+
+  // ── Image loading ──
+  function loadImage(file) {
+    return new Promise((res, rej) => {
+      const fr = new FileReader();
+      fr.onload = () => {
+        const im = new Image();
+        im.onload = () => res(im);
+        im.onerror = rej;
+        im.src = fr.result;
+      };
+      fr.onerror = rej;
+      fr.readAsDataURL(file);
+    });
+  }
+
+  async function handleFile(f) {
+    if (!f) return;
+    img = await loadImage(f);
+    originalImg = img; // keep original for crop reset
+    corners = [];
+    handicapB.clear(); handicapW.clear();
+    nodes = []; redoStack = [];
+    board.clear();
+    // Init crop rect to full image with 5% margin
+    const m = 0.05;
+    cropRect = {
+      x: Math.round(img.width * m),
+      y: Math.round(img.height * m),
+      w: Math.round(img.width * (1 - 2*m)),
+      h: Math.round(img.height * (1 - 2*m)),
+    };
+    onboard.style.display = 'none';
+    imageSection.style.display = '';
+    setMode('crop');
+    fitCanvas();
+    draw();
+  }
+
+  fileInputs.forEach(inp => {
+    if (inp) inp.addEventListener('change', e => {
+      const f = e.target.files?.[0];
+      if (f) handleFile(f);
+    });
+  });
+
+  // ── Canvas sizing ──
+  function fitCanvas() {
+    if (!img) return;
+    const wrap = canvasWrap.getBoundingClientRect();
+    const wrapW = wrap.width;
+    const wrapH = wrap.height;
+    const imgRatio = img.width / img.height;
+    const wrapRatio = wrapW / wrapH;
+    let w, h;
+    if (imgRatio > wrapRatio) {
+      w = wrapW; h = wrapW / imgRatio;
+    } else {
+      h = wrapH; w = wrapH * imgRatio;
+    }
+    canvas.width = Math.round(w * (window.devicePixelRatio || 1));
+    canvas.height = Math.round(h * (window.devicePixelRatio || 1));
+    canvas.style.width = Math.round(w) + 'px';
+    canvas.style.height = Math.round(h) + 'px';
+    ctx.setTransform(window.devicePixelRatio || 1, 0, 0, window.devicePixelRatio || 1, 0, 0);
+  }
+
+  // ── Coordinate transforms ──
+  const dpr = () => window.devicePixelRatio || 1;
+  function cssW() { return canvas.width / dpr(); }
+  function cssH() { return canvas.height / dpr(); }
+
+  function imgToCanvas(p) {
+    return { x: p.x / img.width * cssW(), y: p.y / img.height * cssH() };
+  }
+  function canvasToImg(p) {
+    return { x: p.x / cssW() * img.width, y: p.y / cssH() * img.height };
+  }
+
+  function gridToImg(gx, gy) {
+    const N = boardSize();
+    const u = N === 1 ? 0 : gx / (N - 1);
+    const v = N === 1 ? 0 : gy / (N - 1);
+    const [TL, TR, BR, BL] = corners;
+    return {
+      x: TL.x*(1-u)*(1-v) + TR.x*u*(1-v) + BR.x*u*v + BL.x*(1-u)*v,
+      y: TL.y*(1-u)*(1-v) + TR.y*u*(1-v) + BR.y*u*v + BL.y*(1-u)*v,
+    };
+  }
+
+  function gridToCanvas(gx, gy) {
+    return imgToCanvas(gridToImg(gx, gy));
+  }
+
+  function nearestGrid(pImg) {
+    const N = boardSize();
+    let best = null, bestD = Infinity;
+    for (let y = 0; y < N; y++) {
+      for (let x = 0; x < N; x++) {
+        const pi = gridToImg(x, y);
+        const d = (pi.x - pImg.x)**2 + (pi.y - pImg.y)**2;
+        if (d < bestD) { bestD = d; best = { x, y }; }
+      }
+    }
+    return best;
+  }
+
+  function boardSize() { return parseInt(boardSizeSel.value, 10); }
+  function moveOffset() { return Math.max(1, parseInt(startMoveNumInput.value, 10) || 1); }
+
+  // ── Mode management ──
+  function setMode(m) {
+    mode = m;
+    cropBtn.classList.toggle('primary', m === 'crop');
+    setCornersBtn.classList.toggle('primary', m === 'corners');
+    handicapBtn.classList.toggle('primary', m === 'handicap');
+    recordBtn.classList.toggle('primary', m === 'record');
+
+    const hasCorners = corners.length === 4;
+    cropBtn.disabled = !img;
+    setCornersBtn.disabled = !img;
+    handicapBtn.disabled = !hasCorners;
+    recordBtn.disabled = !hasCorners;
+
+    cropToolbar.style.display = m === 'crop' ? '' : 'none';
+    handicapSection.style.display = m === 'handicap' ? '' : 'none';
+    recordSection.style.display = m === 'record' ? '' : 'none';
+
+    const labels = {
+      none: 'No Image',
+      crop: 'Crop Image',
+      corners: 'Set Board Corners',
+      handicap: 'Handicap Setup',
+      record: 'Recording Moves',
+    };
+    modeChip.textContent = labels[m] || m;
+    updateInfo();
+    draw();
+  }
+
+  function updateInfo() {
+    if (mode === 'crop') {
+      infoChip.textContent = 'Drag edges or corners to crop · tap Apply when done';
+    } else if (mode === 'corners') {
+      const labels = ['top-left', 'top-right', 'bottom-right', 'bottom-left'];
+      const n = corners.length;
+      infoChip.textContent = n < 4 ? `Tap ${labels[n]} corner` : 'Corners set — drag to adjust';
+    } else if (mode === 'handicap') {
+      infoChip.textContent = `Tap intersections · ${handicapB.size + handicapW.size} stones`;
+    } else if (mode === 'record') {
+      infoChip.textContent = `Move ${nodes.length + moveOffset()}`;
+    } else {
+      infoChip.textContent = '';
+    }
+    updateTurnChip();
+    updateButtons();
+  }
+
+  function updateTurnChip() {
+    if (mode !== 'record') { turnChip.innerHTML = ''; return; }
+    const c = nextColor();
+    turnChip.innerHTML = `<span class="status-chip turn-${c.toLowerCase()}">${c === 'B' ? '● Black' : '○ White'} to play</span>`;
+  }
+
+  function updateButtons() {
+    undoBtn.disabled = nodes.length === 0 && !(mode === 'corners' && corners.length > 0);
+    redoBtn.disabled = redoStack.length === 0;
+    updateMoveList();
+  }
+
+  function updateMoveList() {
+    if (mode !== 'record') return;
+    const N = boardSize();
+    const off = moveOffset();
+    moveListEl.innerHTML = nodes.map((n, i) => {
+      if (n.pass) return `<span class="move-item ${n.color.toLowerCase()}">${i+off}:pass</span>`;
+      const col = String.fromCharCode(65 + (n.x >= 8 ? n.x + 1 : n.x)); // skip I
+      const row = N - n.y;
+      return `<span class="move-item ${n.color.toLowerCase()}">${i+off}:${col}${row}</span>`;
+    }).join('');
+    moveListEl.scrollTop = moveListEl.scrollHeight;
+  }
+
+  function updateHcpCount() {
+    hcpCountEl.textContent = `${handicapB.size + handicapW.size} stones placed`;
+  }
+
+  // ── Board state ──
+  function rebuildBoard() {
+    board.clear();
+    for (const k of handicapB) board.set(k, 'B');
+    for (const k of handicapW) board.set(k, 'W');
+    for (const n of nodes) {
+      if (n.pass) continue;
+      if (n.ae?.length) for (const r of n.ae) board.delete(key(r.x, r.y));
+      board.set(key(n.x, n.y), n.color);
+    }
+  }
+
+  function nextColor() {
+    const start = firstToPlaySel.value;
+    if (nodes.length === 0) return start;
+    return nodes[nodes.length - 1].color === 'B' ? 'W' : 'B';
+  }
+
+  // ── Drawing ──
+  function draw() {
+    const w = cssW(), h = cssH();
+    ctx.clearRect(0, 0, w, h);
+    if (!img) return;
+
+    // Background image
+    ctx.drawImage(img, 0, 0, w, h);
+
+    // ── Crop overlay ──
+    if (mode === 'crop' && cropRect) {
+      const cr = {
+        x: cropRect.x / img.width * w,
+        y: cropRect.y / img.height * h,
+        w: cropRect.w / img.width * w,
+        h: cropRect.h / img.height * h,
+      };
+
+      // Dim outside
+      ctx.save();
+      ctx.fillStyle = 'rgba(0,0,0,0.6)';
+      // top
+      ctx.fillRect(0, 0, w, cr.y);
+      // bottom
+      ctx.fillRect(0, cr.y + cr.h, w, h - cr.y - cr.h);
+      // left
+      ctx.fillRect(0, cr.y, cr.x, cr.h);
+      // right
+      ctx.fillRect(cr.x + cr.w, cr.y, w - cr.x - cr.w, cr.h);
+
+      // Border
+      ctx.strokeStyle = 'var(--accent)';
+      ctx.strokeStyle = '#c9a84c';
+      ctx.lineWidth = 2;
+      ctx.strokeRect(cr.x, cr.y, cr.w, cr.h);
+
+      // Corner handles
+      const hs = 10;
+      ctx.fillStyle = '#c9a84c';
+      const handles = [
+        [cr.x, cr.y], [cr.x + cr.w, cr.y],
+        [cr.x, cr.y + cr.h], [cr.x + cr.w, cr.y + cr.h],
+      ];
+      for (const [hx, hy] of handles) {
+        ctx.fillRect(hx - hs/2, hy - hs/2, hs, hs);
+      }
+
+      // Edge midpoint handles
+      ctx.fillStyle = 'rgba(201,168,76,0.7)';
+      const edgeHandles = [
+        [cr.x + cr.w/2, cr.y], [cr.x + cr.w/2, cr.y + cr.h],
+        [cr.x, cr.y + cr.h/2], [cr.x + cr.w, cr.y + cr.h/2],
+      ];
+      for (const [hx, hy] of edgeHandles) {
+        ctx.beginPath(); ctx.arc(hx, hy, hs/2, 0, Math.PI*2); ctx.fill();
+      }
+      ctx.restore();
+      return; // don't draw grid/stones during crop
+    }
+
+    // Slight dim overlay so grid pops
+    if (corners.length === 4) {
+      ctx.fillStyle = 'rgba(0,0,0,0.2)';
+      ctx.fillRect(0, 0, w, h);
+    }
+
+    // Draw corners
+    const cornerLabels = ['TL', 'TR', 'BR', 'BL'];
+    corners.forEach((p, i) => {
+      const c = imgToCanvas(p);
+      ctx.save();
+      ctx.fillStyle = '#e74c3c';
+      ctx.strokeStyle = '#fff';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(c.x, c.y, 10, 0, Math.PI * 2);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#fff';
+      ctx.font = '700 10px "DM Sans",sans-serif';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillText(cornerLabels[i], c.x, c.y);
+      ctx.restore();
+    });
+
+    if (corners.length < 4) return;
+
+    const N = boardSize();
+    const cellSize = computeCellSize();
+
+    // Draw grid lines
+    ctx.save();
+    ctx.strokeStyle = 'rgba(200,168,76,0.55)';
+    ctx.lineWidth = 1;
+    for (let i = 0; i < N; i++) {
+      const a = gridToCanvas(i, 0);
+      const b = gridToCanvas(i, N - 1);
+      ctx.beginPath(); ctx.moveTo(a.x, a.y); ctx.lineTo(b.x, b.y); ctx.stroke();
+      const c = gridToCanvas(0, i);
+      const d = gridToCanvas(N - 1, i);
+      ctx.beginPath(); ctx.moveTo(c.x, c.y); ctx.lineTo(d.x, d.y); ctx.stroke();
+    }
+
+    // Star points
+    const stars = getStarPoints(N);
+    ctx.fillStyle = 'rgba(200,168,76,0.7)';
+    for (const [sx, sy] of stars) {
+      const p = gridToCanvas(sx, sy);
+      ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI * 2); ctx.fill();
+    }
+    ctx.restore();
+
+    // Draw handicap stones
+    const stoneR = cellSize * 0.44;
+    for (const k of handicapB) {
+      const [x, y] = parseKey(k);
+      drawStone(x, y, 'B', stoneR, null, mode === 'handicap' ? 1 : 0.8);
+    }
+    for (const k of handicapW) {
+      const [x, y] = parseKey(k);
+      drawStone(x, y, 'W', stoneR, null, mode === 'handicap' ? 1 : 0.8);
+    }
+
+    // Draw recorded moves
+    nodes.forEach((n, idx) => {
+      if (n.pass) return;
+      drawStone(n.x, n.y, n.color, stoneR, idx + moveOffset(), 0.92);
+    });
+
+    // Highlight last placed stone with red ring
+    for (let i = nodes.length - 1; i >= 0; i--) {
+      if (!nodes[i].pass) {
+        const p = gridToCanvas(nodes[i].x, nodes[i].y);
+        ctx.save();
+        ctx.strokeStyle = '#e33';
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        ctx.arc(p.x, p.y, stoneR, 0, Math.PI * 2);
+        ctx.stroke();
+        ctx.restore();
+        break;
+      }
+    }
+  }
+
+  function drawStone(gx, gy, color, r, number, alpha) {
+    const p = gridToCanvas(gx, gy);
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    // Stone body
+    const grad = ctx.createRadialGradient(p.x - r*0.3, p.y - r*0.3, r*0.1, p.x, p.y, r);
+    if (color === 'B') {
+      grad.addColorStop(0, '#555');
+      grad.addColorStop(1, '#0a0a0a');
+    } else {
+      grad.addColorStop(0, '#fff');
+      grad.addColorStop(1, '#c8c4bc');
+    }
+    ctx.fillStyle = grad;
+    ctx.strokeStyle = color === 'B' ? 'rgba(255,255,255,0.4)' : 'rgba(0,0,0,0.5)';
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(p.x, p.y, r, 0, Math.PI * 2);
+    ctx.fill(); ctx.stroke();
+
+    // Number
+    if (number != null) {
+      const fontSize = Math.max(9, Math.min(r * 1.1, 18));
+      ctx.font = `700 ${fontSize}px "JetBrains Mono",monospace`;
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.globalAlpha = 1;
+      // Outline for readability
+      ctx.strokeStyle = color === 'B' ? 'rgba(0,0,0,0.7)' : 'rgba(255,255,255,0.8)';
+      ctx.lineWidth = 3;
+      ctx.strokeText(String(number), p.x, p.y + 0.5);
+      ctx.fillStyle = color === 'B' ? '#fff' : '#111';
+      ctx.fillText(String(number), p.x, p.y + 0.5);
+    }
+
+    ctx.restore();
+  }
+
+  function computeCellSize() {
+    // Average cell spacing in canvas coords
+    const N = boardSize();
+    if (N < 2 || corners.length < 4) return 20;
+    const tl = gridToCanvas(0, 0);
+    const tr = gridToCanvas(N-1, 0);
+    const bl = gridToCanvas(0, N-1);
+    const dx = Math.hypot(tr.x - tl.x, tr.y - tl.y) / (N - 1);
+    const dy = Math.hypot(bl.x - tl.x, bl.y - tl.y) / (N - 1);
+    return (dx + dy) / 2;
+  }
+
+  function getStarPoints(N) {
+    if (N === 9) return [[2,2],[6,2],[4,4],[2,6],[6,6]];
+    if (N === 13) return [[3,3],[9,3],[6,6],[3,9],[9,9],[6,3],[3,6],[9,6]];
+    if (N === 19) return [[3,3],[9,3],[15,3],[3,9],[9,9],[15,9],[3,15],[9,15],[15,15]];
+    return [];
+  }
+
+  // ── Touch / click handling ──
+  function getEventPos(ev) {
+    const rect = canvas.getBoundingClientRect();
+    const touch = ev.touches?.[0] || ev.changedTouches?.[0] || ev;
+    return {
+      x: touch.clientX - rect.left,
+      y: touch.clientY - rect.top,
+    };
+  }
+
+  function findNearCorner(pos, threshold = 30) {
+    for (let i = 0; i < corners.length; i++) {
+      const c = imgToCanvas(corners[i]);
+      if (Math.hypot(c.x - pos.x, c.y - pos.y) < threshold) return i;
+    }
+    return -1;
+  }
+
+  canvas.addEventListener('pointerdown', ev => {
+    ev.preventDefault();
+    if (!img) return;
+    const pos = getEventPos(ev);
+
+    // ── Crop mode drag ──
+    if (mode === 'crop' && cropRect) {
+      const hit = hitTestCrop(pos);
+      if (hit) {
+        cropDrag = hit;
+        cropDragStart = { mx: pos.x, my: pos.y, rect: { ...cropRect } };
+        canvas.setPointerCapture(ev.pointerId);
+        return;
+      }
+    }
+
+    if (mode === 'corners' && corners.length === 4) {
+      const near = findNearCorner(pos);
+      if (near >= 0) {
+        dragCorner = near;
+        canvas.setPointerCapture(ev.pointerId);
+        return;
+      }
+    }
+  });
+
+  canvas.addEventListener('pointermove', ev => {
+    // ── Crop drag ──
+    if (cropDrag && cropDragStart) {
+      ev.preventDefault();
+      const pos = getEventPos(ev);
+      const dx = (pos.x - cropDragStart.mx) / cssW() * img.width;
+      const dy = (pos.y - cropDragStart.my) / cssH() * img.height;
+      const r = cropDragStart.rect;
+      const minS = 50; // minimum crop size in img pixels
+
+      let nx = r.x, ny = r.y, nw = r.w, nh = r.h;
+
+      if (cropDrag === 'move') {
+        nx = clamp(r.x + dx, 0, img.width - r.w);
+        ny = clamp(r.y + dy, 0, img.height - r.h);
+      } else {
+        // Handle edge/corner drags
+        if (cropDrag.includes('l')) {
+          const newX = clamp(r.x + dx, 0, r.x + r.w - minS);
+          nw = r.w - (newX - r.x);
+          nx = newX;
+        }
+        if (cropDrag.includes('r')) {
+          nw = clamp(r.w + dx, minS, img.width - r.x);
+        }
+        if (cropDrag.includes('t')) {
+          const newY = clamp(r.y + dy, 0, r.y + r.h - minS);
+          nh = r.h - (newY - r.y);
+          ny = newY;
+        }
+        if (cropDrag.includes('b')) {
+          nh = clamp(r.h + dy, minS, img.height - r.y);
+        }
+      }
+
+      cropRect = { x: nx, y: ny, w: nw, h: nh };
+      draw();
+      return;
+    }
+
+    if (dragCorner < 0) return;
+    ev.preventDefault();
+    const pos = getEventPos(ev);
+    corners[dragCorner] = canvasToImg(pos);
+    draw();
+  });
+
+  canvas.addEventListener('pointerup', ev => {
+    // ── Crop drag end ──
+    if (cropDrag) {
+      cropDrag = null;
+      cropDragStart = null;
+      canvas.releasePointerCapture(ev.pointerId);
+      return;
+    }
+
+    if (dragCorner >= 0) {
+      dragCorner = -1;
+      canvas.releasePointerCapture(ev.pointerId);
+      rebuildBoard();
+      draw();
+      return;
+    }
+
+    if (!img) return;
+    ev.preventDefault();
+    const pos = getEventPos(ev);
+    const pImg = canvasToImg(pos);
+
+    if (mode === 'corners') {
+      if (corners.length < 4) {
+        corners.push(pImg);
+        if (corners.length === 4) {
+          setMode('handicap');
+          rebuildBoard();
+        }
+        draw();
+        updateInfo();
+      }
+      return;
+    }
+
+    if (corners.length !== 4) return;
+    const g = nearestGrid(pImg);
+
+    if (mode === 'handicap') {
+      const color = hcpColorSel.value;
+      const k = key(g.x, g.y);
+      const targetSet = color === 'B' ? handicapB : handicapW;
+      const otherSet = color === 'B' ? handicapW : handicapB;
+
+      if (targetSet.has(k)) {
+        targetSet.delete(k);
+      } else {
+        otherSet.delete(k);
+        targetSet.add(k);
+      }
+      updateHcpCount();
+      rebuildBoard();
+      draw();
+      updateInfo();
+      return;
+    }
+
+    if (mode === 'record') {
+      const k = key(g.x, g.y);
+      const occupied = board.get(k);
+
+      if (occupied && !replaceToggle.checked) return;
+
+      const color = nextColor();
+      const ae = occupied ? [{ x: g.x, y: g.y }] : [];
+      nodes.push({ color, x: g.x, y: g.y, ae });
+      redoStack = [];
+      rebuildBoard();
+      draw();
+      updateInfo();
+    }
+  });
+
+  // Prevent default touch behaviors on canvas
+  canvas.addEventListener('touchstart', e => e.preventDefault(), { passive: false });
+
+  // ── Utilities ──
+  function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+  function hitTestCrop(pos) {
+    if (!cropRect) return null;
+    const w = cssW(), h = cssH();
+    const cr = {
+      x: cropRect.x / img.width * w,
+      y: cropRect.y / img.height * h,
+      w: cropRect.w / img.width * w,
+      h: cropRect.h / img.height * h,
+    };
+    const t = 22; // touch threshold
+
+    // Corner handles
+    const cx = cr.x, cy = cr.y, cx2 = cr.x + cr.w, cy2 = cr.y + cr.h;
+    if (Math.hypot(pos.x - cx, pos.y - cy) < t) return 'tl';
+    if (Math.hypot(pos.x - cx2, pos.y - cy) < t) return 'tr';
+    if (Math.hypot(pos.x - cx, pos.y - cy2) < t) return 'bl';
+    if (Math.hypot(pos.x - cx2, pos.y - cy2) < t) return 'br';
+
+    // Edge handles
+    if (Math.abs(pos.y - cy) < t && pos.x > cx + t && pos.x < cx2 - t) return 't';
+    if (Math.abs(pos.y - cy2) < t && pos.x > cx + t && pos.x < cx2 - t) return 'b';
+    if (Math.abs(pos.x - cx) < t && pos.y > cy + t && pos.y < cy2 - t) return 'l';
+    if (Math.abs(pos.x - cx2) < t && pos.y > cy + t && pos.y < cy2 - t) return 'r';
+
+    // Interior = move
+    if (pos.x > cx + t && pos.x < cx2 - t && pos.y > cy + t && pos.y < cy2 - t) return 'move';
+
+    return null;
+  }
+
+  function applyCrop() {
+    if (!cropRect || !img) return;
+    const offscreen = document.createElement('canvas');
+    offscreen.width = Math.round(cropRect.w);
+    offscreen.height = Math.round(cropRect.h);
+    const octx = offscreen.getContext('2d');
+    octx.drawImage(img,
+      cropRect.x, cropRect.y, cropRect.w, cropRect.h,
+      0, 0, cropRect.w, cropRect.h
+    );
+    const croppedImg = new Image();
+    croppedImg.onload = () => {
+      img = croppedImg;
+      cropRect = null;
+      corners = [];
+      setMode('corners');
+      fitCanvas();
+      draw();
+    };
+    croppedImg.src = offscreen.toDataURL();
+  }
+
+  // ── Crop button handlers ──
+  applyCropBtn.addEventListener('click', applyCrop);
+
+  resetCropBtn.addEventListener('click', () => {
+    if (!originalImg) return;
+    img = originalImg;
+    const m = 0.05;
+    cropRect = {
+      x: Math.round(img.width * m),
+      y: Math.round(img.height * m),
+      w: Math.round(img.width * (1 - 2*m)),
+      h: Math.round(img.height * (1 - 2*m)),
+    };
+    corners = [];
+    fitCanvas();
+    draw();
+  });
+
+  skipCropBtn.addEventListener('click', () => {
+    cropRect = null;
+    setMode('corners');
+    draw();
+  });
+
+  cropBtn.addEventListener('click', () => {
+    if (!img) return;
+    // Re-enter crop with current image
+    const m = 0.05;
+    cropRect = {
+      x: Math.round(img.width * m),
+      y: Math.round(img.height * m),
+      w: Math.round(img.width * (1 - 2*m)),
+      h: Math.round(img.height * (1 - 2*m)),
+    };
+    setMode('crop');
+    draw();
+  });
+
+  document.getElementById('recropBtn').addEventListener('click', () => {
+    if (!originalImg) return;
+    img = originalImg;
+    corners = [];
+    handicapB.clear(); handicapW.clear();
+    nodes = []; redoStack = [];
+    board.clear();
+    const m = 0.05;
+    cropRect = {
+      x: Math.round(img.width * m),
+      y: Math.round(img.height * m),
+      w: Math.round(img.width * (1 - 2*m)),
+      h: Math.round(img.height * (1 - 2*m)),
+    };
+    setMode('crop');
+    fitCanvas();
+    draw();
+  });
+
+  // ── Button handlers ──
+  setCornersBtn.addEventListener('click', () => { if (img) setMode('corners'); });
+  handicapBtn.addEventListener('click', () => { if (corners.length === 4) setMode('handicap'); });
+  recordBtn.addEventListener('click', () => { if (corners.length === 4) setMode('record'); });
+
+  resetCornersBtn.addEventListener('click', () => {
+    corners = [];
+    handicapB.clear(); handicapW.clear();
+    nodes = []; redoStack = [];
+    board.clear();
+    setMode('corners');
+    draw();
+  });
+
+  clearHcpBtn.addEventListener('click', () => {
+    handicapB.clear(); handicapW.clear();
+    updateHcpCount(); rebuildBoard(); draw(); updateInfo();
+  });
+
+  passBtn.addEventListener('click', () => {
+    const color = nextColor();
+    nodes.push({ color, pass: true, x: -1, y: -1, ae: [] });
+    redoStack = [];
+    draw(); updateInfo();
+  });
+
+  clearMovesBtn.addEventListener('click', () => {
+    nodes = []; redoStack = [];
+    rebuildBoard(); draw(); updateInfo();
+    sgfOutput.value = '';
+  });
+
+  undoBtn.addEventListener('click', () => {
+    if (mode === 'corners' && corners.length > 0) {
+      corners.pop();
+      draw(); updateInfo();
+      return;
+    }
+    if (nodes.length === 0) return;
+    redoStack.push(nodes.pop());
+    rebuildBoard(); draw(); updateInfo();
+  });
+
+  redoBtn.addEventListener('click', () => {
+    if (redoStack.length === 0) return;
+    nodes.push(redoStack.pop());
+    rebuildBoard(); draw(); updateInfo();
+  });
+
+  // ── SGF ──
+  function sgfCoord(x, y) {
+    const a = 97; // 'a'
+    return String.fromCharCode(a + x) + String.fromCharCode(a + y);
+  }
+
+  function generateSGF() {
+    const N = boardSize();
+    const props = [`GM[1]FF[4]CA[UTF-8]AP[KifuDigitizer:2.0]`];
+    props.push(`SZ[${N}]KM[${(komiInput.value || '0').trim()}]`);
+    if (playerB.value.trim()) props.push(`PB[${playerB.value.trim()}]`);
+    if (playerW.value.trim()) props.push(`PW[${playerW.value.trim()}]`);
+    if (resultInput.value.trim()) props.push(`RE[${resultInput.value.trim()}]`);
+
+    const ha = handicapB.size;
+    if (ha >= 2) props.push(`HA[${ha}]`);
+
+    let rootSetup = '';
+    for (const k of handicapB) {
+      const [x, y] = parseKey(k);
+      rootSetup += `AB[${sgfCoord(x, y)}]`;
+    }
+    for (const k of handicapW) {
+      const [x, y] = parseKey(k);
+      rootSetup += `AW[${sgfCoord(x, y)}]`;
+    }
+
+    let sgf = `(;${props.join('')}${rootSetup}`;
+    for (const n of nodes) {
+      if (n.pass) {
+        sgf += `;${n.color}[]`;
+        continue;
+      }
+      let aeProps = '';
+      if (n.ae?.length) {
+        for (const r of n.ae) aeProps += `AE[${sgfCoord(r.x, r.y)}]`;
+      }
+      sgf += `;${n.color}[${sgfCoord(n.x, n.y)}]${aeProps}`;
+    }
+    sgf += ')';
+    return sgf;
+  }
+
+  exportBtn.addEventListener('click', () => {
+    sgfOutput.value = generateSGF();
+  });
+
+  copyBtn.addEventListener('click', async () => {
+    const sgf = generateSGF();
+    sgfOutput.value = sgf;
+    try {
+      await navigator.clipboard.writeText(sgf);
+      copyBtn.textContent = '✓ Copied!';
+      setTimeout(() => copyBtn.textContent = 'Copy to Clipboard', 1200);
+    } catch {
+      sgfOutput.focus(); sgfOutput.select();
+      document.execCommand('copy');
+    }
+  });
+
+  // ── Settings change handlers ──
+  boardSizeSel.addEventListener('change', () => { rebuildBoard(); draw(); updateInfo(); });
+  hcpColorSel.addEventListener('change', () => draw());
+  firstToPlaySel.addEventListener('change', () => { draw(); updateInfo(); });
+  startMoveNumInput.addEventListener('input', () => { draw(); updateInfo(); });
+
+  window.addEventListener('resize', () => {
+    if (!img) return;
+    fitCanvas(); draw();
+  });
+
+  // Init
+  updateInfo();
+})();
+</script>
+<script>
+// PWA Service Worker registration
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('sw.js').catch(() => {});
+}
+</script>
+</body>
+</html>
