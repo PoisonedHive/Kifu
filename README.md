@@ -8,7 +8,7 @@ Tired of losing where the next move was written down?
 Tired of having 200+ numbers blend together on a piece of record paper?
 
 This application might be for you!
-I recommend 'installing' the website on you applications for offline use. It's PWM ready and can be used completely offline.
+I recommend 'installing' the website on you applications for offline use as a Progressive Web App (PWM). It's PWM ready and can be used completely offline.
 
 1. Users are able to take a photo using their camera, or upload an image into the application. Then select your board size (9x9, 13x13, 19x19) at the top left of the page
 2. After cropping it to size (optional)
